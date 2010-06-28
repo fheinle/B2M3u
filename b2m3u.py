@@ -33,7 +33,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 from urllib import unquote
 from shutil import copy
-from sys import getfilesystemencoding
+import sys
 import os
 
 banshee_db = os.path.expanduser('~/.config/banshee-1/banshee.db')
@@ -121,10 +121,10 @@ def normalize_filename(uri):
     """convert URIs used by banshee to normal filenames"""
     # TODO: support gvfs uris
     assert uri.startswith('file:///'), 'Only local files supported'
-    filename = unquote(uri.encode(getfilesystemencoding())[7:])
+    filename = unquote(uri.encode(sys.getfilesystemencoding())[7:])
     return filename
 
-def save_playlist(playlist_id, target):
+def save_playlist(playlist_id, target, verbose=False):
     """save songs from a playlist to a directory and write m3u file"""
     if not os.path.isdir(target):
         os.makedirs(target)
@@ -133,13 +133,33 @@ def save_playlist(playlist_id, target):
     playlist_file = open(playlist_fname, 'w')
     for track in playlist: 
         source = normalize_filename(track)
-        copy(source.decode('utf-8'), target)
+        try:
+            copy(source.decode('utf-8'), target)
+        except IOError, exception_reason:
+            if exception_reason[1] == 'No such file or directory':
+                msg = 'Error: File not found "%s"' % source
+                print >> sys.stderr, msg
+                continue
+            else:
+                raise
         basename = os.path.basename(source)
         playlist_file.write(basename + '\n')
-        print "Added %s" % basename
+        if verbose:
+            print "Added %s" % basename
     playlist_file.close()
 
-if __name__ == '__main__':
+def main(argv=[]):
+    argv = argv or sys.argv[1:]
+    import optparse
+    parser = optparse.OptionParser()
+    parser.add_option('-v', '--verbose', dest='verbose', default=False,
+                      help='Print all files while copying',
+                      action='store_true')
+    parser.add_option('-r', '--remove-album-tags', dest='album_remove',
+                      help='Replace album tags in files', default=False,
+                      action='store_true')
+    (options, args) = parser.parse_args(argv)
+
     print 'Banshee playlists:'
     print 'ID: | Name:'
     for playlist in get_regular_playlists():
@@ -147,4 +167,10 @@ if __name__ == '__main__':
     playlist_id = raw_input('Enter playlist ID: ')
     session = Session()
     p = session.query(Playlist).filter_by(PlaylistID=playlist_id).first().Name
-    save_playlist(int(playlist_id), os.path.expanduser('~/%s' % p))
+    save_playlist(int(playlist_id), os.path.expanduser('~/%s' % p),
+                  verbose=options.verbose)
+    print "Done"
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
