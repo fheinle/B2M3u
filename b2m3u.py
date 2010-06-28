@@ -106,6 +106,7 @@ class PlaylistEntry(Base):
 def get_regular_playlists():
     """return all user-created playlists, excepting play queues etc"""
     session = Session()
+    session.flush = lambda: True #read only database
     playlists = session.query(Playlist).filter_by(Special=0)
     return playlists.all()
 
@@ -166,6 +167,7 @@ def main(argv=[]):
         print '%4d' % playlist.PlaylistID, playlist.Name
     playlist_id = raw_input('Enter playlist ID: ')
     session = Session()
+    session.flush = lambda: True #read only database
     p = session.query(Playlist).filter_by(PlaylistID=playlist_id).first().Name
     save_playlist(int(playlist_id), os.path.expanduser('~/%s' % p),
                   verbose=options.verbose)
