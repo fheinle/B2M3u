@@ -58,7 +58,7 @@ class Track(Base):
             setattr(self, key, value)
 
     def __repr__(self):
-        return "<Track('%s')>" % self.Title
+        return "<Track('%s')>" % self.Title.encode('utf-8')
 
 class Playlist(Base):
     """Playlist in Banshee's database
@@ -76,7 +76,7 @@ class Playlist(Base):
             setattr(self, key, value)
 
     def __repr__(self):
-        return "<Playlist('%s', id '%s')>" % (self.Name,
+        return "<Playlist('%s', id '%s')>" % (self.Name.encode('utf-8'),
                                               self.PlaylistID)
 
 class PlaylistEntry(Base):
