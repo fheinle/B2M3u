@@ -31,6 +31,8 @@ from sqlalchemy.orm import relation
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
+from mutagen.easyid3 import EasyID3
+
 from urllib import unquote
 from shutil import copy
 import sys
@@ -118,6 +120,15 @@ def get_song_uris_in_playlist(playlist_id):
     uris = [playlist_entry.track.Uri for playlist_entry in query.all()]
     return uris
 
+def strip_album_tags(song, new_album='Playlists'):
+    """replace album tags with a special new one
+
+    this ensures that duplicate songs don't clutter mp3 players'
+    album views"""
+    song_file = EasyID3(song)
+    song_file['album'] = new_album
+    song_file.save()
+
 def normalize_filename(uri):
     """convert URIs used by banshee to normal filenames"""
     # TODO: support gvfs uris
@@ -125,7 +136,7 @@ def normalize_filename(uri):
     filename = unquote(uri.encode(sys.getfilesystemencoding())[7:])
     return filename
 
-def save_playlist(playlist_id, target, verbose=False):
+def save_playlist(playlist_id, target, verbose=False, strip=False):
     """save songs from a playlist to a directory and write m3u file"""
     if not os.path.isdir(target):
         os.makedirs(target)
@@ -136,6 +147,13 @@ def save_playlist(playlist_id, target, verbose=False):
         source = normalize_filename(track)
         try:
             copy(source.decode('utf-8'), target)
+            if strip:
+                strip_album_tags(
+                    os.path.join(
+                        target,
+                        os.path.basename(source.decode('utf-8'))
+                    )
+                )
         except IOError, exception_reason:
             if exception_reason[1] == 'No such file or directory':
                 msg = 'Error: File not found "%s"' % source
@@ -156,7 +174,7 @@ def main(argv=[]):
     parser.add_option('-v', '--verbose', dest='verbose', default=False,
                       help='Print all files while copying',
                       action='store_true')
-    parser.add_option('-r', '--remove-album-tags', dest='album_remove',
+    parser.add_option('-r', '--remove-album-tags', dest='strip',
                       help='Replace album tags in files', default=False,
                       action='store_true')
     (options, args) = parser.parse_args(argv)
@@ -170,7 +188,7 @@ def main(argv=[]):
     session.flush = lambda: True #read only database
     p = session.query(Playlist).filter_by(PlaylistID=playlist_id).first().Name
     save_playlist(int(playlist_id), os.path.expanduser('~/%s' % p),
-                  verbose=options.verbose)
+                  verbose=options.verbose, strip=options.strip)
     print "Done"
     return 0
 
