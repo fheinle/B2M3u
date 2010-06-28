@@ -76,7 +76,8 @@ class Playlist(Base):
             setattr(self, key, value)
 
     def __repr__(self):
-        return "<Playlist('%s', id '%s')>" % (self.Name, self.PlaylistID)
+        return "<Playlist('%s', id '%s')>" % (self.Name,
+                                              self.PlaylistID)
 
 class PlaylistEntry(Base):
     """PlaylistEntry in Banshee's database
@@ -128,11 +129,22 @@ def save_playlist(playlist_id, target):
     if not os.path.isdir(target):
         os.makedirs(target)
     playlist = get_song_uris_in_playlist(playlist_id)
-    playlist_file = open(os.path.join(target, '%s.m3u' % target), 'w')
+    playlist_fname = os.path.join(target, '%s.m3u' % os.path.basename(target))
+    playlist_file = open(playlist_fname, 'w')
     for track in playlist: 
         source = normalize_filename(track)
-        copy(source, target)
+        copy(source.decode('utf-8'), target)
         basename = os.path.basename(source)
         playlist_file.write(basename + '\n')
         print "Added %s" % basename
     playlist_file.close()
+
+if __name__ == '__main__':
+    print 'Banshee playlists:'
+    print 'ID: | Name:'
+    for playlist in get_regular_playlists():
+        print '%4d' % playlist.PlaylistID, playlist.Name
+    playlist_id = raw_input('Enter playlist ID: ')
+    session = Session()
+    p = session.query(Playlist).filter_by(PlaylistID=playlist_id).first().Name
+    save_playlist(int(playlist_id), os.path.expanduser('~/%s' % p))
