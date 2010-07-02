@@ -146,12 +146,14 @@ def save_playlist(playlist_id, target, verbose=False, strip=False):
     for track in playlist: 
         source = normalize_filename(track)
         try:
-            copy(source.decode('utf-8'), target)
+            copy(source.decode(sys.getfilesystemencoding()), target)
             if strip:
                 strip_album_tags(
                     os.path.join(
                         target,
-                        os.path.basename(source.decode('utf-8'))
+                        os.path.basename(source.decode(
+                            sys.getfilesystemencoding())
+                        )
                     )
                 )
         except IOError, exception_reason:
