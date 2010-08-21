@@ -1,0 +1,59 @@
+B2M3u
+=====
+
+Convert's [[http://www.banshee-project.org|Banshee]] playlists to m3u playlists
+and extracts mentioned music files to a flat directory.
+
+This allows copying playlists as whole directories with music already included,
+to be used with dumb media players, e.g. the Palm Pre smartphone.
+
+Requirements
+------------
+
+Before you can use B2M3u, some additional libraries are required:
+
+- sqlalchemy (python-sqlalchemy in debian/ubuntu)
+- mutagen (python-mutagen in debian/ubuntu)
+
+Usage
+-----
+
+    ./b2m3u.py [-v] [-r]
+
+Options:
+
+- **-v** print every song name while processing
+- **-r** replace "album" tag with "Playlists"
+
+When run, b2m3u lists all human-made playlists within Banshee and allows the
+user to choose. The playlist selected and its song files will be copied to a new
+directory named after the playlist. 
+
+B2M3u offers to replace album ID3 tags within song filenames with "Playlists".
+That way, your "sort by album" view won't be full of albums that only have one
+song or, worse, albums that carry some songs double.
+
+After processing, it should be simple to just copy/move the newly created
+directory to your media player.
+
+Contact
+-------
+
+Please visit http://github.com/fheinle/B2M3u/issues for the bug tracker.
+
+Copyright
+--------- 
+
+Copyright (c) 2010 Florian Heinle <launchpad@planet-tiax.de>
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program.  If not, see <http://www.gnu.org/licenses/>
